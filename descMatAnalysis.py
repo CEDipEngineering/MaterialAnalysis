@@ -75,6 +75,9 @@ def Plot(start = 0.11, end = 0.35, force = arq["Tension (GPa)"], strain = arq["S
     # Determina a região a ser considerada reta.
     boolArr = np.logical_and(strain >= start, strain <= end)
 
+    # Determina a região a ser olhada para interseção
+    boolArr2 = np.logical_and(strain >= end, strain <= 1.05)
+
     # Faz um ajuste de retas por MMQ para a região acima.
     b, youngMod = polyfit(strain[boolArr], force[boolArr], 1)
     
@@ -85,9 +88,9 @@ def Plot(start = 0.11, end = 0.35, force = arq["Tension (GPa)"], strain = arq["S
     if draw_projection:
         print("Searching for intersection in curve %s..." % writings["title"])
         px, py = (0.2,0)
-        axis = np.linspace(0.2,0.65, 1000)
+        axis = np.linspace(0.2,0.65, len(strain[boolArr2]))
         young_line = (axis-px)*youngMod - py
-        elasticLimit, intersectedStrain = intersectCurves(strain, force, axis, young_line)
+        elasticLimit, intersectedStrain = intersectCurves(strain[boolArr2], force[boolArr2], axis, young_line)
         print("Intersection Found!")
         plt.scatter(elasticLimit, intersectedStrain, c = "Blue", lw = 4, zorder = 5, label = "Limite de Escoamento")
         plt.plot(axis, young_line)
@@ -112,7 +115,7 @@ def Plot(start = 0.11, end = 0.35, force = arq["Tension (GPa)"], strain = arq["S
         plt.xlim(xbounds[0], xbounds[1])
     if ybounds is not None:    
         plt.ylim(ybounds[0],ybounds[1])
-    plt.annotate("Módulo de Young: %.2f" % youngMod, (axis[20] + 0.3, young_line[20]))
+    plt.annotate("Módulo de Young: %.2f" % youngMod, (axis[20] + 0.05, young_line[20]))
     plt.legend(loc = 4)
     plt.savefig(writings["filename"])
     plt.show()
