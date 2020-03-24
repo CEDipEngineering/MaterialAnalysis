@@ -1,4 +1,12 @@
 # De autoria de Carlos Eduardo Dip, João Pedro Gianfaldoni de Andrade e Lucas Keichi Fukada.
+"""
+Dados a serem registrados:
+Amostra A: 50 - 57mm
+Amostra B: 50 - 58.9mm
+Amostra C: 50 - 63.25mm
+"""
+
+
 
 print("Importing...")
 import pandas as pd
