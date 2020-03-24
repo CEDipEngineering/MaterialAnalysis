@@ -31,9 +31,9 @@ arq["Tension (GPa)"] = arq["Force (N)"]/(np.pi*(8.5/2)**2) #arq["Force (N)"]/(np
 arqB["Tension (GPa)"] = arqB["Force (kN)"]/(np.pi*(8.55/2)**2)
 arqC["Tension (GPa)"] = arqC["Force (kN)"]/(np.pi*(8.5/2)**2) 
 
-# arq["Tension (GPa)"] /= 1e3
-# arqB["Tension (GPa)"] /= 1e3
-# arqC["Tension (GPa)"] /= 1e3
+arq["Tension (GPa)"] /= 10
+arqB["Tension (GPa)"] /= 10
+arqC["Tension (GPa)"] /= 10
 
 arq = arq.rename({"Force (N)":"Force (kN)", "Time (min)": "Time (s)"}, axis = 1)
 # arqB = arqB.rename({"Position (mm)":"Deformation (%)"}, axis = 1)
@@ -59,13 +59,10 @@ def intersectCurves(c1x, c1y, c2x, c2y):
     lista = np.array(lista).mean(axis = 0)
     return (lista[0], lista[1])
 
-def findLocalMaximum(series, start, end, trueSeries):
-    boolArr = np.logical_and(series>start, series<end)
-    out = np.argmax(trueSeries[boolArr])
+def findLocalMaximum(strain, start, end, force):
+    return max(force[np.logical_and(strain>start,strain<end)])
 
-    return out
-
-def Plot(start = 0.11, end = 0.35, force = arq["Tension (GPa)"], strain = arq["Strain (%)"], draw_projection = False, writings = {"title":"a", "xlabel":"b", "ylabel":"c", "filename":"unnamed.png"}, xbounds = (0,1.09), ybounds = (0,30), drawMaxStrain = False, limitsForLocalMax = None):
+def Plot(start = 0.11, end = 0.35, force = arq["Tension (GPa)"], strain = arq["Strain (%)"], draw_projection = False, writings = {"title":"a", "xlabel":"b", "ylabel":"c", "filename":"unnamed.png"}, xbounds = (0,1), ybounds = (0,30), drawMaxStrain = False, limitsForLocalMax = None):
     print("Started drawing curve %s" % writings["title"])
     
     if not writings["title"]:
@@ -96,7 +93,7 @@ def Plot(start = 0.11, end = 0.35, force = arq["Tension (GPa)"], strain = arq["S
         plt.plot(strain[boolArr], b + youngMod*strain[boolArr], label = "Tendência", c = "green", lw = 3)
         
         # Escreve o módulo de Young no gráfico.
-        plt.scatter([0],[0], label = "Módulo de Young: %.2f GPa" % youngMod, alpha  = 0)
+        plt.scatter([0],[0], label = "Módulo de Young: %.2f (GPa)" % youngMod, alpha  = 0)
         print("Trendline drawn!")
 
 
@@ -107,12 +104,10 @@ def Plot(start = 0.11, end = 0.35, force = arq["Tension (GPa)"], strain = arq["S
 
     if limitsForLocalMax is not None:
         _limsmall, _limlarge = limitsForLocalMax
-        sizeOffset = len(strain[np.logical_and(strain>0, strain<_limsmall)])
-        print(len(strain), sizeOffset)
-        idx = findLocalMaximum(strain, _limsmall, _limlarge, force)
-        print(idx, strain[idx], force[idx])
-        plt.scatter(strain[idx+sizeOffset], force[idx+sizeOffset])
-        
+        _max = findLocalMaximum(strain, _limsmall, _limlarge, force)
+        plt.axhline(_max, label = "Limite de Escoamento: %.2f (GPa)" % _max, alpha = 0.3, c = "Green")
+
+
     if draw_projection:
         print("Searching for intersection in curve %s..." % writings["title"])
         px, py = (0.2,0)
@@ -120,7 +115,7 @@ def Plot(start = 0.11, end = 0.35, force = arq["Tension (GPa)"], strain = arq["S
         young_line = (axis-px)*youngMod - py
         elasticLimit, intersectedStrain = intersectCurves(strain[boolArr2], force[boolArr2], axis, young_line)
         print("Intersection Found!")
-        plt.scatter(elasticLimit, intersectedStrain, c = "Blue", lw = 4, zorder = 5, label = "Limite de Escoamento")
+        plt.scatter(elasticLimit, intersectedStrain, c = "Blue", lw = 4, zorder = 5, label = "Limite de Escoamento: %.2f (GPa)" % intersectedStrain)
         plt.plot(axis, young_line)
         plt.annotate("%.2f" % intersectedStrain, (elasticLimit + 0.5, intersectedStrain + 0.5))
 
@@ -153,53 +148,55 @@ print("Data filtered succesfully!")
 
 ### ----------------------------- ###
 ### Começo das curvas individuais ###
-doA, doB, doC = False, False, False
+doA = True
+doB = True
+doC = True
 
 if doA:
     writings = {"title":"Amostra A",
-                "xlabel":"Deforção relativa (%)", 
+                "xlabel":"Deformação relativa (%)", 
                 "ylabel":"Tensão (GPa)", 
                 "filename":"Str_Tens(A).png"}
-    Plot(0.11, 0.35, arq["Tension (GPa)"], arq["Strain (%)"], draw_projection=True, writings = writings, ybounds = None)
+    Plot(0.11, 0.35, arq["Tension (GPa)"], arq["Strain (%)"], draw_projection=True, writings = writings, ybounds = (0,31))
 
     ### ----
 
-    writings = {"title":"Amostra A 2",
+    writings = {"title":"Amostra A",
                 "xlabel":"Deformação absoluta (mm)", 
                 "ylabel":"Tensão (GPa)", 
                 "filename":"Disp_Tens(A).png"}
-    Plot(None, None, arq["Tension (GPa)"], arq["Position (mm)"], draw_projection=False, writings = writings, xbounds = None, ybounds = None, drawMaxStrain=True)
+    Plot(None, None, arq["Tension (GPa)"], arq["Position (mm)"], draw_projection=False, writings = writings, xbounds = (0,9), ybounds = (0,35), drawMaxStrain=True)
 
 ### ----
 
 if doB:
     writings = {"title":"Amostra B",
-                "xlabel":"Deforção relativa (%)", 
+                "xlabel":"Deformação relativa (%)", 
                 "ylabel":"Tensão (GPa)", 
                 "filename":"Str_Tens(B).png"}
-    Plot(0.03, 0.11, arqB["Tension (GPa)"], arqB["Strain (%)"], draw_projection=False, writings = writings, ybounds = None, limitsForLocalMax = (0.01, 0.4))
+    Plot(0.03, 0.11, arqB["Tension (GPa)"], arqB["Strain (%)"], draw_projection=False, writings = writings, ybounds = (0,30), limitsForLocalMax = (0.01, 0.4))
 
     ### ----
 
-    writings = {"title":"Amostra B 2",
+    writings = {"title":"Amostra B",
                 "xlabel":"Deformação absoluta (mm)", 
                 "ylabel":"Tensão (GPa)", 
                 "filename":"Disp_Tens(B).png"}
-    Plot(None, None, arqB["Tension (GPa)"], arqB["Position (mm)"], draw_projection=False, writings = writings, xbounds = None, ybounds = None, drawMaxStrain = True)
+    Plot(None, None, arqB["Tension (GPa)"], arqB["Position (mm)"], draw_projection=False, writings = writings, xbounds = (0,25), ybounds = (0,41), drawMaxStrain = True)
 
 ### ----
 
 if doC:
     writings = {"title":"Amostra C",
-                "xlabel":"Deforção relativa (%)", 
+                "xlabel":"Deformação relativa (%)", 
                 "ylabel":"Tensão (GPa)", 
                 "filename":"Str_Tens(C).png"}
-    Plot(0.001, 0.15, arqC["Tension (GPa)"], arqC["Strain (%)"], draw_projection=False, writings = writings, ybounds = None, limitsForLocalMax = (0.15, 0.25))
+    Plot(0.001, 0.15, arqC["Tension (GPa)"], arqC["Strain (%)"], draw_projection=False, writings = writings, ybounds = (0,41), limitsForLocalMax = (0.15, 0.25))
 
     ### ----
 
-    writings = {"title":"Amostra C 2",
+    writings = {"title":"Amostra C",
                 "xlabel":"Deformação absoluta (mm)", 
                 "ylabel":"Tensão (GPa)", 
                 "filename":"Disp_Tens(C).png"}
-    Plot(None, None, arqC["Tension (GPa)"], arqC["Position (mm)"], draw_projection=False, writings = writings, xbounds = None, ybounds = None, drawMaxStrain = True)
+    Plot(None, None, arqC["Tension (GPa)"], arqC["Position (mm)"], draw_projection=False, writings = writings, xbounds = (0,19), ybounds = (0,65), drawMaxStrain = True)
