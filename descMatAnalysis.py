@@ -105,7 +105,7 @@ def Plot(start = 0.11, end = 0.35, force = arq["Tension (GPa)"], strain = arq["S
     if limitsForLocalMax is not None:
         _limsmall, _limlarge = limitsForLocalMax
         _max = findLocalMaximum(strain, _limsmall, _limlarge, force)
-        plt.axhline(_max, label = "Limite de Escoamento: %.2f (GPa)" % _max, alpha = 0.3, c = "Green")
+        plt.axhline(_max, label = "Limite de Escoamento: %.2f (GPa)" % _max, alpha = 0.7, c = "Green", ls = "--")
 
 
     if draw_projection:
@@ -124,10 +124,10 @@ def Plot(start = 0.11, end = 0.35, force = arq["Tension (GPa)"], strain = arq["S
     print("Drawing your graph now!")
     if drawMaxStrain:
         # Desenha uma linha horizontal no limite de resistência.
-        plt.axhline(max(force), label = "Limite de Resistência: %.2f (GPa)"%max(force), alpha = 0.3, c = "Green", ls = "--")
+        plt.axhline(max(force), label = "Limite de Resistência: %.2f (GPa)"%max(force), alpha = 0.7, c = "Green", ls = "--")
 
     # Desenha a curva de deformação por tensão.
-    plt.plot(strain, force, label = "Amostra", alpha = 0.5, c = "gray")
+    plt.plot(strain, force, label = "Amostra", alpha = 0.5, c = "black")
     plt.title(writings["title"])
     plt.xlabel(writings["xlabel"])
     plt.ylabel(writings["ylabel"])
