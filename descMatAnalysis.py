@@ -19,9 +19,9 @@ print("Import Successful!")
 print("Reading Files...")
 plt.rcParams.update({'font.size': 22})
     
-arq = pd.read_csv(r"C://Users//cadud//Repos//MaterialAnalysis//data//a.csv", sep = ";")
-arqB = pd.read_csv(r"C://Users//cadud//Repos//MaterialAnalysis//data//b.csv", sep = ";")
-arqC = pd.read_csv(r"C://Users//cadud//Repos//MaterialAnalysis//data//c.csv", sep = ";")
+arq = pd.read_csv(os.getcwd()+"//data//a.csv", sep = ";")
+arqB = pd.read_csv(os.getcwd()+"//data//b.csv", sep = ";")
+arqC = pd.read_csv(os.getcwd()+"//data//c.csv", sep = ";")
 # print(arq)
 arqB = arqB.apply(lambda x: np.float64(x))
 arqC = arqC.apply(lambda x: np.float64(x))
@@ -39,9 +39,11 @@ arq["Tension (GPa)"] = arq["Force (N)"]/(np.pi*(8.5/2)**2) #arq["Force (N)"]/(np
 arqB["Tension (GPa)"] = arqB["Force (kN)"]/(np.pi*(8.55/2)**2)
 arqC["Tension (GPa)"] = arqC["Force (kN)"]/(np.pi*(8.5/2)**2) 
 
-arq["Tension (GPa)"] /= 10
-arqB["Tension (GPa)"] /= 10
-arqC["Tension (GPa)"] /= 10
+
+scale = 10
+arq["Tension (GPa)"] /= scale
+arqB["Tension (GPa)"] /= scale
+arqC["Tension (GPa)"] /= scale
 
 arq = arq.rename({"Force (N)":"Force (kN)", "Time (min)": "Time (s)"}, axis = 1)
 # arqB = arqB.rename({"Position (mm)":"Deformation (%)"}, axis = 1)
@@ -112,8 +114,17 @@ def Plot(start = 0.11, end = 0.35, force = arq["Tension (GPa)"], strain = arq["S
 
     if limitsForLocalMax is not None:
         _limsmall, _limlarge = limitsForLocalMax
-        _max = findLocalMaximum(strain, _limsmall, _limlarge, force)
-        plt.axhline(_max, label = "Limite de Escoamento: %.2f (GPa)" % _max, alpha = 0.7, c = "Green", ls = "--")
+        boolArr3 = np.logical_and(strain >= _limsmall, strain <= _limlarge)
+        # _max = findLocalMaximum(strain, _limsmall, _limlarge, force)
+        # plt.axhline(_max, label = "Limite de Escoamento: %.2f (GPa)" % _max, alpha = 0.7, c = "Green", ls = "--")
+
+
+        # Faz um ajuste de retas por MMQ para a região acima.
+        b2, m = polyfit(strain[boolArr3], force[boolArr3], 1)
+        plt.plot(strain[boolArr3], b2 + m*strain[boolArr3], label = "Patamar", c = "green", lw = 3)
+            
+        plt.scatter([0],[0], label = "Limite de escoamento: %.2f (MPa)" % (b2*10), alpha  = 0)
+        print("Trendline drawn!")
 
 
     if draw_projection:
@@ -123,7 +134,7 @@ def Plot(start = 0.11, end = 0.35, force = arq["Tension (GPa)"], strain = arq["S
         young_line = (axis-px)*youngMod - py
         elasticLimit, intersectedStrain = intersectCurves(strain[boolArr2], force[boolArr2], axis, young_line)
         print("Intersection Found!")
-        plt.scatter(elasticLimit, intersectedStrain, c = "Blue", lw = 4, zorder = 5, label = "Limite de Escoamento: %.2f (GPa)" % intersectedStrain)
+        plt.scatter(elasticLimit, intersectedStrain, c = "Blue", lw = 4, zorder = 5, label = "Limite de Escoamento: %.2f (MPa)" % (intersectedStrain*10))
         plt.plot(axis, young_line)
         plt.annotate("%.2f" % intersectedStrain, (elasticLimit + 0.5, intersectedStrain + 0.5))
 
@@ -144,7 +155,7 @@ def Plot(start = 0.11, end = 0.35, force = arq["Tension (GPa)"], strain = arq["S
     if ybounds is not None:    
         plt.ylim(ybounds[0],ybounds[1])
     plt.legend(loc = 4)
-    plt.savefig(writings["filename"])
+    plt.savefig(os.getcwd() + "//data//" + writings["filename"])
     plt.show()
 
 print("Filtering data to remove bumps...")
@@ -182,7 +193,7 @@ if doB:
                 "xlabel":"Deformação relativa (%)", 
                 "ylabel":"Tensão (GPa)", 
                 "filename":"Str_Tens(B).png"}
-    Plot(0.03, 0.11, arqB["Tension (GPa)"], arqB["Strain (%)"], draw_projection=False, writings = writings, ybounds = (0,30), limitsForLocalMax = (0.01, 0.4))
+    Plot(0.03, 0.11, arqB["Tension (GPa)"], arqB["Strain (%)"], draw_projection=False, writings = writings, ybounds = (0,30), limitsForLocalMax=(0.3,1))
 
     ### ----
 
@@ -199,7 +210,7 @@ if doC:
                 "xlabel":"Deformação relativa (%)", 
                 "ylabel":"Tensão (GPa)", 
                 "filename":"Str_Tens(C).png"}
-    Plot(0.001, 0.15, arqC["Tension (GPa)"], arqC["Strain (%)"], draw_projection=False, writings = writings, ybounds = (0,41), limitsForLocalMax = (0.15, 0.25))
+    Plot(0.001, 0.15, arqC["Tension (GPa)"], arqC["Strain (%)"], draw_projection=False, writings = writings, ybounds = (0,41), limitsForLocalMax=(0.3,1))
 
     ### ----
 
