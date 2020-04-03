@@ -143,7 +143,7 @@ def Plot(start = 0.11, end = 0.35, force = arq["Tension (GPa)"], strain = arq["S
     print("Drawing your graph now!")
     if drawMaxStrain:
         # Desenha uma linha horizontal no limite de resistência.
-        plt.axhline(max(force), label = "Limite de Resistência: %.2f (GPa)"%max(force), alpha = 0.7, c = "Green", ls = "--")
+        plt.axhline(max(force), label = "Limite de Resistência: %.2f (MPa)"% (max(force)*10), alpha = 0.7, c = "Green", ls = "--")
 
     # Desenha a curva de deformação por tensão.
     plt.plot(strain, force, label = "Amostra", alpha = 0.5, c = "black")
